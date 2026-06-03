@@ -27,6 +27,19 @@ bumping their versions here. Release order:
 All Eloquent models for platform data (devices, beats, incidents, signals) live in
 `track-any-device/core` and are served via the central `app/` API — not queried directly here.
 The only local models are `TenantConfig` (branding/feature flags) and Laravel internals
+
+**Keep API documentation up to date on the website.**
+The platform's public docs live in the `web` repository under `src/app/docs/`.
+When you add a new portal feature, change a portal API call, or modify the integration
+contract with the central `app/` API:
+
+1. File a GitHub issue against the `web` repo describing the doc change needed.
+2. Reference the issue in your commit (`ref track-any-device/web#{n}`).
+3. The `web` AI agent will implement the doc update when it picks up the issue.
+
+Mapping for this repo (`server-tenant/`):
+- New portal page or feature → update `web/src/app/docs/tenant/`
+- Changed PlatformApiClient endpoint usage → update API usage docs
 (sessions, cache). No platform migrations in this repo.
 
 ---
