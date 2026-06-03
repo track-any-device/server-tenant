@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine AS builder
+FROM php:8.5-fpm-alpine AS builder
 
 # Build tools + system dependencies
 RUN apk add --no-cache \
@@ -32,7 +32,7 @@ RUN pnpm run build
 RUN rm -rf node_modules resources/js
 
 # ── Runtime stage ──────────────────────────────────────────────────────────────
-FROM php:8.3-fpm-alpine AS runtime
+FROM php:8.5-fpm-alpine AS runtime
 
 RUN apk add --no-cache libpng libzip nginx supervisor
 
