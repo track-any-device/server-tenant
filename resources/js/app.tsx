@@ -1,11 +1,12 @@
 'use client';
 
+import { type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { Link, usePage, useForm, Head, router } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createInertiaAdapter, PlatformProvider } from '@trackany-device/components';
 import { initializeTheme } from '@/hooks/use-appearance';
+import PortalLayout from '@/layouts/portal-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Fleet Portal';
 
@@ -19,11 +20,15 @@ const adapter = createInertiaAdapter({
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    resolve: (name) =>
-        resolvePageComponent(
-            `./pages/${name}.tsx`,
-            import.meta.glob('./pages/**/*.tsx'),
-        ),
+    resolve: async (name) => {
+        const pages = import.meta.glob('./pages/**/*.tsx');
+        const page = (await pages[`./pages/${name}.tsx`]()) as { default: any };
+        // Set PortalLayout as the default persistent layout for every portal page.
+        // Pages that need a different layout (e.g. a full-screen map without sidebar)
+        // can override by setting their own `.layout` export.
+        page.default.layout ??= (page: ReactNode) => <PortalLayout>{page}</PortalLayout>;
+        return page.default;
+    },
     setup({ el, App, props }) {
         createRoot(el).render(
             <PlatformProvider adapter={adapter}>
