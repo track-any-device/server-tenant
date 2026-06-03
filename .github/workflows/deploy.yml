@@ -49,8 +49,8 @@ jobs:
           tags: |
             ${{ env.DOCKERHUB_ORG }}/server-tenant:latest
             ${{ env.DOCKERHUB_ORG }}/server-tenant:${{ steps.version.outputs.version }}
-          cache-from: type=gha,scope=server-tenant
-          cache-to: type=gha,mode=max,scope=server-tenant
+          cache-from: type=gha,scope=server-tenant-v2
+          cache-to: type=gha,mode=max,scope=server-tenant-v2
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
             BUILD_SHA=${{ github.sha }}
