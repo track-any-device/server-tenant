@@ -1,40 +1,37 @@
-import { createInertiaApp } from '@inertiajs/react';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { initializeTheme } from '@/hooks/use-appearance';
-import AppLayout from '@/layouts/app-layout';
-import AuthLayout from '@/layouts/auth-layout';
-import SettingsLayout from '@/layouts/settings/layout';
+'use client';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import { createRoot } from 'react-dom/client';
+import { createInertiaApp } from '@inertiajs/react';
+import { Link, usePage, useForm, Head, router } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import { createInertiaAdapter, PlatformProvider } from '@trackany-device/components';
+import { initializeTheme } from '@/hooks/use-appearance';
+
+const appName = import.meta.env.VITE_APP_NAME || 'Fleet Portal';
+
+const adapter = createInertiaAdapter({
+    Link,
+    usePage,
+    useForm: useForm as any,
+    Head,
+    router,
+});
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-                return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
-            case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
-            default:
-                return AppLayout;
-        }
-    },
-    strictMode: true,
-    withApp(app) {
-        return (
-            <TooltipProvider delayDuration={0}>
-                {app}
-                <Toaster />
-            </TooltipProvider>
+    resolve: (name) =>
+        resolvePageComponent(
+            `./pages/${name}.tsx`,
+            import.meta.glob('./pages/**/*.tsx'),
+        ),
+    setup({ el, App, props }) {
+        createRoot(el).render(
+            <PlatformProvider adapter={adapter}>
+                <App {...props} />
+            </PlatformProvider>,
         );
     },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: { color: '#4B5563' },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();
