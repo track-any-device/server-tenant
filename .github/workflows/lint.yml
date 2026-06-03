@@ -2,17 +2,9 @@ name: linter
 
 on:
   push:
-    branches:
-      - develop
-      - main
-      - master
-      - workos
+    branches: [main]
   pull_request:
-    branches:
-      - develop
-      - main
-      - master
-      - workos
+    branches: [main]
 
 permissions:
   contents: write
@@ -21,31 +13,34 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
+        uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.3'
 
-      - name: Install Dependencies
-        run: |
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm install
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
 
-      - name: Run Pint
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install PHP dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: PHP lint (Pint)
         run: composer lint
 
-      - name: Format Frontend
-        run: npm run format
+      - name: Frontend lint
+        run: pnpm run lint:check
 
-      - name: Lint Frontend
-        run: npm run lint
-
-      # - name: Commit Changes
-      #   uses: stefanzweifel/git-auto-commit-action@v7
-      #   with:
-      #     commit_message: fix code style
-      #     commit_options: '--no-verify'
+      - name: Frontend format check
+        run: pnpm run format:check
