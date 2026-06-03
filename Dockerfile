@@ -4,13 +4,13 @@ FROM php:8.5-fpm-alpine AS builder
 RUN apk add --no-cache \
     autoconf gcc g++ make \
     git curl \
-    libpng-dev libzip-dev \
+    libzip-dev oniguruma-dev \
     zip unzip \
     nodejs npm \
     && npm install -g pnpm
 
-# PHP extensions (compiled in builder so we don't need build tools in runtime)
-RUN docker-php-ext-install pdo pdo_mysql zip gd opcache
+# PHP extensions needed for the portal (no gd — no image processing on server)
+RUN docker-php-ext-install pdo pdo_mysql zip mbstring opcache
 RUN pecl install redis && docker-php-ext-enable redis
 
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
 
 # JS dependencies + build
 COPY package.json pnpm-lock.yaml* .npmrc* ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 RUN pnpm run build
@@ -34,7 +34,7 @@ RUN rm -rf node_modules resources/js
 # ── Runtime stage ──────────────────────────────────────────────────────────────
 FROM php:8.5-fpm-alpine AS runtime
 
-RUN apk add --no-cache libpng libzip nginx supervisor
+RUN apk add --no-cache libzip oniguruma nginx supervisor
 
 # Copy compiled PHP extensions from builder (no build tools needed at runtime)
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
