@@ -1,6 +1,9 @@
 'use client';
 
-import { usePlatformPageProps, usePlatformNavigate } from '@trackany-device/components';
+import {
+    usePlatformPageProps,
+    usePlatformNavigate,
+} from '@trackany-device/components';
 
 interface Incident {
     id: number;
@@ -19,52 +22,63 @@ interface PageProps {
 }
 
 export default function Dashboard() {
-    const { deviceCount, openIncidents, tenant, auth } = usePlatformPageProps<PageProps>();
+    const { deviceCount, openIncidents, tenant, auth } =
+        usePlatformPageProps<PageProps>();
     const navigate = usePlatformNavigate();
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
             <div>
                 <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
                     {tenant.name}
                 </h1>
                 {auth.user && (
-                    <p className="text-sm text-gray-500 mt-1">Welcome, {auth.user.name}</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                        Welcome, {auth.user.name}
+                    </p>
                 )}
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div
-                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-blue-400 transition-colors"
+                    className="cursor-pointer rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-blue-400 dark:border-gray-700 dark:bg-gray-800"
                     onClick={() => navigate('/devices')}
                 >
                     <p className="text-sm text-gray-500">Total Devices</p>
-                    <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">{deviceCount}</p>
+                    <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
+                        {deviceCount}
+                    </p>
                 </div>
 
                 <div
-                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-orange-400 transition-colors"
+                    className="cursor-pointer rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-orange-400 dark:border-gray-700 dark:bg-gray-800"
                     onClick={() => navigate('/incidents?status=open')}
                 >
                     <p className="text-sm text-gray-500">Open Incidents</p>
-                    <p className="mt-1 text-3xl font-bold text-orange-600">{openIncidents.total}</p>
+                    <p className="mt-1 text-3xl font-bold text-orange-600">
+                        {openIncidents.total}
+                    </p>
                 </div>
 
                 <div
-                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 cursor-pointer hover:border-green-400 transition-colors"
+                    className="cursor-pointer rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-green-400 dark:border-gray-700 dark:bg-gray-800"
                     onClick={() => navigate('/map')}
                 >
                     <p className="text-sm text-gray-500">Live Map</p>
-                    <p className="mt-1 text-sm font-medium text-green-600">View all devices →</p>
+                    <p className="mt-1 text-sm font-medium text-green-600">
+                        View all devices →
+                    </p>
                 </div>
             </div>
 
             {/* Recent open incidents */}
             {openIncidents.data.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Incidents</h2>
+                <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Recent Incidents
+                        </h2>
                         <button
                             onClick={() => navigate('/incidents?status=open')}
                             className="text-xs text-blue-600 hover:text-blue-800"
@@ -76,22 +90,29 @@ export default function Dashboard() {
                         {openIncidents.data.map((incident) => (
                             <li
                                 key={incident.id}
-                                className="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750"
-                                onClick={() => navigate(`/incidents/${incident.id}`)}
+                                className="dark:hover:bg-gray-750 flex cursor-pointer items-center justify-between px-5 py-3 hover:bg-gray-50"
+                                onClick={() =>
+                                    navigate(`/incidents/${incident.id}`)
+                                }
                             >
                                 <div>
                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                        {incident.device?.name ?? `Device #${incident.id}`}
+                                        {incident.device?.name ??
+                                            `Device #${incident.id}`}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">{incident.event_type}</p>
+                                    <p className="mt-0.5 text-xs text-gray-500">
+                                        {incident.event_type}
+                                    </p>
                                 </div>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                    incident.priority === 'critical'
-                                        ? 'bg-red-100 text-red-700'
-                                        : incident.priority === 'high'
-                                            ? 'bg-orange-100 text-orange-700'
-                                            : 'bg-gray-100 text-gray-600'
-                                }`}>
+                                <span
+                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                                        incident.priority === 'critical'
+                                            ? 'bg-red-100 text-red-700'
+                                            : incident.priority === 'high'
+                                              ? 'bg-orange-100 text-orange-700'
+                                              : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                >
                                     {incident.priority}
                                 </span>
                             </li>

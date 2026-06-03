@@ -2,8 +2,11 @@
 
 import { createInertiaApp } from '@inertiajs/react';
 import { Link, usePage, useForm, Head, router } from '@inertiajs/react';
-import { createInertiaAdapter, PlatformProvider } from '@trackany-device/components';
-import type {ReactNode} from 'react';
+import {
+    createInertiaAdapter,
+    PlatformProvider,
+} from '@trackany-device/components';
+import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from '@/hooks/use-appearance';
 import PortalLayout from '@/layouts/portal-layout';
@@ -26,7 +29,9 @@ createInertiaApp({
         // Set PortalLayout as the default persistent layout for every portal page.
         // Pages that need a different layout (e.g. a full-screen map without sidebar)
         // can override by setting their own `.layout` export.
-        page.default.layout ??= (page: ReactNode) => <PortalLayout>{page}</PortalLayout>;
+        page.default.layout ??= (page: ReactNode) => (
+            <PortalLayout>{page}</PortalLayout>
+        );
 
         return page.default;
     },
