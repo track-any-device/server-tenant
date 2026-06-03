@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function IncidentsIndex() {
-    const { incidents, filters } = usePlatformPageProps<PageProps>();
+    const { incidents } = usePlatformPageProps<PageProps>();
     const navigate = usePlatformNavigate();
 
     return (

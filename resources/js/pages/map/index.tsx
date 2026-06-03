@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { usePlatformPageProps } from '@trackany-device/components';
+import { useEffect, useRef, useState } from 'react';
 
 interface DevicePosition {
     id: number;
@@ -58,7 +58,9 @@ export default function MapIndex() {
 
     // ── Leaflet map init ──────────────────────────────────────────────────────
     useEffect(() => {
-        if (!mapRef.current || leafletMap.current) return;
+        if (!mapRef.current || leafletMap.current) {
+return;
+}
 
         import('leaflet').then((L) => {
             // Fix default marker icon paths (webpack/vite asset issue)
@@ -110,13 +112,18 @@ export default function MapIndex() {
 
     // ── Update markers when device positions change ───────────────────────────
     useEffect(() => {
-        if (!leafletMap.current) return;
+        if (!leafletMap.current) {
+return;
+}
 
         import('leaflet').then((L) => {
             devices.forEach((device) => {
-                if (device.last_lat == null || device.last_lon == null) return;
+                if (device.last_lat == null || device.last_lon == null) {
+return;
+}
 
                 const existing = markersRef.current.get(device.id);
+
                 if (existing) {
                     existing.setLatLng([device.last_lat, device.last_lon]);
                     existing.setPopupContent(devicePopup(device));
@@ -132,7 +139,9 @@ export default function MapIndex() {
 
     // ── Pusher real-time updates ──────────────────────────────────────────────
     useEffect(() => {
-        if (!pusherKey) return;
+        if (!pusherKey) {
+return;
+}
 
         import('pusher-js').then(({ default: Pusher }) => {
             const pusher = new Pusher(pusherKey, {
@@ -158,8 +167,10 @@ export default function MapIndex() {
             ch.bind('App\\Events\\LocationsBatchEvent', (payload: LocationsBatchPayload) => {
                 setDevices((prev) => {
                     const next = [...prev];
+
                     for (const pos of payload.positions) {
                         const idx = next.findIndex((d) => d.id === pos.device_id);
+
                         if (idx !== -1) {
                             next[idx] = {
                                 ...next[idx],
@@ -170,6 +181,7 @@ export default function MapIndex() {
                             };
                         }
                     }
+
                     return next;
                 });
             });
@@ -177,7 +189,9 @@ export default function MapIndex() {
             pusherRef.current = pusher;
         });
 
-        return () => { pusherRef.current?.disconnect(); };
+        return () => {
+ pusherRef.current?.disconnect(); 
+};
     }, [pusherKey, pusherHost, pusherPort, pusherScheme, pusherCluster, tenantId]);
 
     const active = devices.filter(d => d.last_lat != null);
@@ -203,6 +217,7 @@ function devicePopup(device: DevicePosition): string {
     const updated = device.last_signal_at
         ? new Date(device.last_signal_at).toLocaleTimeString()
         : '—';
+
     return `
         <div style="min-width:160px;font-family:sans-serif;font-size:13px">
             <strong style="display:block;margin-bottom:4px">${device.name}</strong>

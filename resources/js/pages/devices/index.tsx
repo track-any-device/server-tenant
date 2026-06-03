@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function DevicesIndex() {
-    const { devices, filters } = usePlatformPageProps<PageProps>();
+    const { devices } = usePlatformPageProps<PageProps>();
     const navigate = usePlatformNavigate();
 
     return (

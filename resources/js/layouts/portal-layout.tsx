@@ -1,8 +1,8 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import AppSidebarLayout from '@trackany-device/components/layouts/app/app-sidebar-layout';
 import { usePlatformPageProps } from '@trackany-device/components';
+import AppSidebarLayout from '@trackany-device/components/layouts/app/app-sidebar-layout';
+import type { ReactNode } from 'react';
 
 interface SharedProps {
     auth: { user: { id: number; name: string; email: string; role?: string } | null };

@@ -1,7 +1,7 @@
 'use client';
 
+import { usePlatformPageProps, usePlatformNavigate } from '@trackany-device/components';
 import { useState } from 'react';
-import { usePlatformPageProps, usePlatformNavigate, usePlatformForm } from '@trackany-device/components';
 
 interface Incident {
     id: number;
@@ -46,8 +46,12 @@ export default function IncidentShow() {
     const [processing, setProcessing] = useState(false);
 
     const updateStatus = async (status: string) => {
-        if (processing) return;
+        if (processing) {
+return;
+}
+
         setProcessing(true);
+
         try {
             await fetch(`/incidents/${incident.id}`, {
                 method: 'PATCH',
