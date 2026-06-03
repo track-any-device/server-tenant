@@ -1,26 +1,20 @@
 FROM php:8.3-fpm-alpine AS builder
 
-# System dependencies
+# Build tools + system dependencies
 RUN apk add --no-cache \
-    git \
-    curl \
-    libpng-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    nodejs \
-    npm \
+    autoconf gcc g++ make \
+    git curl \
+    libpng-dev libzip-dev \
+    zip unzip \
+    nodejs npm \
     && npm install -g pnpm
 
-# PHP extensions
+# PHP extensions (compiled in builder so we don't need build tools in runtime)
 RUN docker-php-ext-install pdo pdo_mysql zip gd opcache
-
-# Install redis extension from PECL
 RUN pecl install redis && docker-php-ext-enable redis
 
 WORKDIR /app
 
-# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # PHP dependencies
@@ -37,14 +31,14 @@ RUN pnpm run build
 # Remove dev JS artifacts — only the built assets matter at runtime
 RUN rm -rf node_modules resources/js
 
-# ── Runtime stage ─────────────────────────────────────────────────────────────
+# ── Runtime stage ──────────────────────────────────────────────────────────────
 FROM php:8.3-fpm-alpine AS runtime
 
 RUN apk add --no-cache libpng libzip nginx supervisor
 
-# PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql opcache
-RUN pecl install redis && docker-php-ext-enable redis
+# Copy compiled PHP extensions from builder (no build tools needed at runtime)
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/     /usr/local/etc/php/conf.d/
 
 WORKDIR /var/www/html
 
