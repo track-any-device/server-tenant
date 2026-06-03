@@ -96,6 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -182,3 +184,16 @@ jobs:
           body: ${{ steps.changelog.outputs.body }}
           draft: false
           prerelease: false
+
+# ── 5. Bump version in .github/install.sh ────────────────────────────────────
+  bump-install:
+    name: Bump install.sh
+    needs: [build, release]
+    if: needs.release.result == 'success'
+    uses: track-any-device/.github/.github/workflows/bump-install-version.yml@main
+    with:
+      service: TAD_SERVER_TENANT_TAG
+      version: ${{ needs.build.outputs.version }}
+      commit_message: "chore: bump server-tenant to ${{ needs.build.outputs.version }} in install.sh [skip ci]"
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
