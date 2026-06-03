@@ -38,6 +38,7 @@
         "globals": "^15.14.0",
         "laravel-vite-plugin": "^3.0.0",
         "lucide-react": "^0.475.0",
+        "pusher-js": "^8.4.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "tailwindcss": "^4.0.0",
