@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a76cbe8be04636765a4bbc590de7fb40",
+    "content-hash": "215ef259f2ce4a597f9f00ac8eb2a85d",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7894,23 +7894,23 @@
         },
         {
             "name": "track-any-device/sso-client",
-            "version": "v0.2.2",
+            "version": "v0.2.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/track-any-device/package-sso-client.git",
-                "reference": "f89821f3177691f9b9041b2fb85d9caa306e5726"
+                "reference": "3c6396877366b2e29b4e97a8674aefc55753e05c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/track-any-device/package-sso-client/zipball/f89821f3177691f9b9041b2fb85d9caa306e5726",
-                "reference": "f89821f3177691f9b9041b2fb85d9caa306e5726",
+                "url": "https://api.github.com/repos/track-any-device/package-sso-client/zipball/3c6396877366b2e29b4e97a8674aefc55753e05c",
+                "reference": "3c6396877366b2e29b4e97a8674aefc55753e05c",
                 "shasum": ""
             },
             "require": {
                 "laravel/framework": "^13.7",
                 "laravel/socialite": "^5.0",
                 "php": "^8.3",
-                "track-any-device/core": "*"
+                "track-any-device/core": "^0.6.2"
             },
             "type": "library",
             "extra": {
@@ -7932,9 +7932,9 @@
             "description": "OAuth2 SSO client — token verification, callback controller, and route helper.",
             "support": {
                 "issues": "https://github.com/track-any-device/package-sso-client/issues",
-                "source": "https://github.com/track-any-device/package-sso-client/tree/v0.2.2"
+                "source": "https://github.com/track-any-device/package-sso-client/tree/v0.2.3"
             },
-            "time": "2026-06-03T10:06:46+00:00"
+            "time": "2026-06-10T12:59:33+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
