@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fc27bd2d63fc58a61de40e4694362426",
+    "content-hash": "a76cbe8be04636765a4bbc590de7fb40",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7793,16 +7793,16 @@
         },
         {
             "name": "track-any-device/core",
-            "version": "v0.4.0",
+            "version": "v0.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/track-any-device/package-core.git",
-                "reference": "a62b47e99b0197d83ee944081ffc2d8df53881b3"
+                "reference": "2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/track-any-device/package-core/zipball/a62b47e99b0197d83ee944081ffc2d8df53881b3",
-                "reference": "a62b47e99b0197d83ee944081ffc2d8df53881b3",
+                "url": "https://api.github.com/repos/track-any-device/package-core/zipball/2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f",
+                "reference": "2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f",
                 "shasum": ""
             },
             "require": {
@@ -7838,9 +7838,9 @@
             "description": "Core package for the Track Any Device platform.",
             "support": {
                 "issues": "https://github.com/track-any-device/package-core/issues",
-                "source": "https://github.com/track-any-device/package-core/tree/v0.4.0"
+                "source": "https://github.com/track-any-device/package-core/tree/v0.6.2"
             },
-            "time": "2026-06-03T10:44:44+00:00"
+            "time": "2026-06-10T12:51:27+00:00"
         },
         {
             "name": "track-any-device/sms-gateway",
