@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "215ef259f2ce4a597f9f00ac8eb2a85d",
+    "content-hash": "ddd7da80dbd9a128466a1c1269107025",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7793,16 +7793,16 @@
         },
         {
             "name": "track-any-device/core",
-            "version": "v0.6.2",
+            "version": "v0.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/track-any-device/package-core.git",
-                "reference": "2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f"
+                "reference": "f77577aaf3f3ce2b4ed6511419f8d819fa7ae07e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/track-any-device/package-core/zipball/2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f",
-                "reference": "2b55d7e5849a2c45ff8e9749902f0bdaf48d7e5f",
+                "url": "https://api.github.com/repos/track-any-device/package-core/zipball/f77577aaf3f3ce2b4ed6511419f8d819fa7ae07e",
+                "reference": "f77577aaf3f3ce2b4ed6511419f8d819fa7ae07e",
                 "shasum": ""
             },
             "require": {
@@ -7838,9 +7838,9 @@
             "description": "Core package for the Track Any Device platform.",
             "support": {
                 "issues": "https://github.com/track-any-device/package-core/issues",
-                "source": "https://github.com/track-any-device/package-core/tree/v0.6.2"
+                "source": "https://github.com/track-any-device/package-core/tree/v0.8.0"
             },
-            "time": "2026-06-10T12:51:27+00:00"
+            "time": "2026-06-11T09:50:14+00:00"
         },
         {
             "name": "track-any-device/sms-gateway",
@@ -7894,23 +7894,23 @@
         },
         {
             "name": "track-any-device/sso-client",
-            "version": "v0.2.3",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/track-any-device/package-sso-client.git",
-                "reference": "3c6396877366b2e29b4e97a8674aefc55753e05c"
+                "reference": "fe09d3f48979c0c3d03c24256a4ba7f5aa830736"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/track-any-device/package-sso-client/zipball/3c6396877366b2e29b4e97a8674aefc55753e05c",
-                "reference": "3c6396877366b2e29b4e97a8674aefc55753e05c",
+                "url": "https://api.github.com/repos/track-any-device/package-sso-client/zipball/fe09d3f48979c0c3d03c24256a4ba7f5aa830736",
+                "reference": "fe09d3f48979c0c3d03c24256a4ba7f5aa830736",
                 "shasum": ""
             },
             "require": {
                 "laravel/framework": "^13.7",
                 "laravel/socialite": "^5.0",
                 "php": "^8.3",
-                "track-any-device/core": "^0.6.2"
+                "track-any-device/core": "^0.8.0"
             },
             "type": "library",
             "extra": {
@@ -7932,9 +7932,9 @@
             "description": "OAuth2 SSO client — token verification, callback controller, and route helper.",
             "support": {
                 "issues": "https://github.com/track-any-device/package-sso-client/issues",
-                "source": "https://github.com/track-any-device/package-sso-client/tree/v0.2.3"
+                "source": "https://github.com/track-any-device/package-sso-client/tree/v0.3.0"
             },
-            "time": "2026-06-10T12:59:33+00:00"
+            "time": "2026-06-11T09:58:06+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
