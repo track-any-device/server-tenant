@@ -23,8 +23,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist
 
-# JS dependencies + build
-COPY package.json pnpm-lock.yaml* .npmrc* ./
+# JS dependencies + build. pnpm-workspace.yaml must be in this layer —
+# without it pnpm installs in non-workspace mode, then the deps check at
+# `pnpm run build` sees node_modules as out of sync and aborts (no TTY).
+ENV CI=true
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* .npmrc* ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .

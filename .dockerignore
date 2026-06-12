@@ -1,0 +1,28 @@
+# Dependencies — installed inside the image, never from the host
+node_modules
+vendor
+
+# Secrets and local state — must never reach a published image
+.env
+.env.*
+!.env.example
+database/*.sqlite
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+
+# VCS / CI / tooling
+.git
+.github
+.idea
+.vscode
+tests
+public/build
+*.md

@@ -1,7 +1,9 @@
 'use client';
 
-import { usePlatformPageProps } from '@trackany-device/components';
-import AppSidebarLayout from '@trackany-device/components/layouts/app/app-sidebar-layout';
+import {
+    AppSidebarLayout,
+    usePlatformPageProps,
+} from '@trackany-device/components';
 import type { ReactNode } from 'react';
 
 interface SharedProps {
