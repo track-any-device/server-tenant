@@ -198,6 +198,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
         run: |
+          # Skip (instead of fail) until the ORG_GITHUB_TOKEN secret is
+          # configured for this repo — it needs actions:write on
+          # track-any-device/.github.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::ORG_GITHUB_TOKEN not configured — skipping install.sh bump."
+            exit 0
+          fi
           gh workflow run bump-install-version.yml \
             --repo track-any-device/.github \
             -f service=TAD_SERVER_TENANT_TAG \
