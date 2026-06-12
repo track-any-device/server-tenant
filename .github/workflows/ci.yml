@@ -186,14 +186,20 @@ jobs:
           prerelease: false
 
 # ── 5. Bump version in .github/install.sh ────────────────────────────────────
+  # bump-install-version.yml only declares `on: workflow_dispatch` (no
+  # workflow_call), so it cannot be invoked as a reusable workflow — calling it
+  # with `uses:` fails the whole file at validation time. Dispatch it instead.
   bump-install:
     name: Bump install.sh
+    runs-on: ubuntu-latest
     needs: [build, release]
-    if: needs.release.result == 'success'
-    uses: track-any-device/.github/.github/workflows/bump-install-version.yml@main
-    with:
-      service: TAD_SERVER_TENANT_TAG
-      version: ${{ needs.build.outputs.version }}
-      commit_message: "chore: bump server-tenant to ${{ needs.build.outputs.version }} in install.sh [skip ci]"
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+    steps:
+      - name: Dispatch bump-install-version in .github repo
+        env:
+          GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+        run: |
+          gh workflow run bump-install-version.yml \
+            --repo track-any-device/.github \
+            -f service=TAD_SERVER_TENANT_TAG \
+            -f version="${{ needs.build.outputs.version }}" \
+            -f commit_message="chore: bump server-tenant to ${{ needs.build.outputs.version }} in install.sh [skip ci]"
