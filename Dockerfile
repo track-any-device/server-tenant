@@ -4,16 +4,15 @@ FROM php:8.5-fpm-alpine AS builder
 RUN apk add --no-cache \
     autoconf gcc g++ make \
     git curl \
-    oniguruma-dev \
     zip unzip \
     nodejs npm \
     && npm install -g pnpm
 
 # PHP extensions for the portal.
-# pdo / pdo_mysql / opcache — bundled, no extra system packages needed.
-# mbstring — requires oniguruma-dev (installed above).
-# No zip extension (not used in portal code), no gd (no image processing).
-RUN docker-php-ext-install pdo pdo_mysql mbstring opcache
+# pdo, pdo_sqlite, mbstring, and opcache are already built into
+# php:8.5-fpm-alpine (pdo is always static in 8.5 — attempting to build it
+# shared fails). Only pdo_mysql is added, for optional on-premise MySQL.
+RUN docker-php-ext-install pdo_mysql
 RUN pecl install redis && docker-php-ext-enable redis
 
 WORKDIR /app
@@ -37,7 +36,7 @@ RUN rm -rf node_modules resources/js
 # ── Runtime stage ──────────────────────────────────────────────────────────────
 FROM php:8.5-fpm-alpine AS runtime
 
-RUN apk add --no-cache oniguruma nginx supervisor
+RUN apk add --no-cache nginx supervisor
 
 # Copy compiled PHP extensions from builder (no build tools needed at runtime)
 COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
