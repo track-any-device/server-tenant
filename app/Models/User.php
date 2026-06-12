@@ -2,13 +2,41 @@
 
 namespace App\Models;
 
-use TrackAnyDevice\Core\Models\User as CoreUser;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\PasskeyAuthenticatable;
 
 /**
- * Thin alias — delegates everything to the central platform User model.
+ * Local portal user — stored in this app's own SQLite database.
  *
- * UsesCentralConnection in CoreUser directs auth queries to the central
- * MySQL database (DB_* env vars pointing at the platform DB).
- * Sessions are stored in the same DB, scoped by SESSION_COOKIE per tenant.
+ * server-tenant is a standalone app: authentication is handled by the
+ * built-in Laravel (Fortify) stack, not by the platform SSO server.
  */
-class User extends CoreUser {}
+class User extends Authenticatable implements PasskeyUser
+{
+    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'two_factor_recovery_codes',
+        'two_factor_secret',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+}

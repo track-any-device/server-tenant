@@ -5,28 +5,31 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Services\PlatformApiClient;
+use App\Models\Device;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MapController extends Controller
 {
-    public function __construct(private PlatformApiClient $api) {}
-
     public function __invoke(): Response
     {
-        // Devices with their last known coordinates for the initial map render.
-        // Real-time updates arrive via Soketi (private-tenant.{id}.locations).
-        $devices = $this->api->devices(['per_page' => 500]);
+        // Initial positions come from the local database; live updates
+        // arrive in the browser straight from Soketi (the same channels
+        // the tenant:listen-signals job records from).
+        $devices = Device::query()
+            ->whereNotNull('last_lat')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Device $device) => $device->toPortalArray());
 
         return Inertia::render('map/index', [
-            'devices'        => data_get($devices, 'data', []),
-            'tenantId'       => config('tenant.id'),
-            'pusherKey'      => config('broadcasting.connections.pusher.key'),
-            'pusherHost'     => config('broadcasting.connections.pusher.host'),
-            'pusherPort'     => config('broadcasting.connections.pusher.port'),
-            'pusherScheme'   => config('broadcasting.connections.pusher.scheme', 'https'),
-            'pusherCluster'  => config('broadcasting.connections.pusher.options.cluster', 'mt1'),
+            'devices' => $devices,
+            'tenantId' => config('tenant.id'),
+            'pusherKey' => config('broadcasting.connections.pusher.key'),
+            'pusherHost' => config('broadcasting.connections.pusher.options.host'),
+            'pusherPort' => config('broadcasting.connections.pusher.options.port'),
+            'pusherScheme' => config('broadcasting.connections.pusher.options.scheme', 'https'),
+            'pusherCluster' => config('broadcasting.connections.pusher.options.cluster', 'mt1'),
         ]);
     }
 }

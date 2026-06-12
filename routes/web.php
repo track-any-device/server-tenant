@@ -39,3 +39,5 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/broadcasting/auth', BroadcastAuthController::class)
         ->name('broadcasting.auth');
 });
+
+require __DIR__.'/settings.php';

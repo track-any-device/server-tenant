@@ -5,22 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
-use App\Services\PlatformApiClient;
+use App\Services\TenantApiClient;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Proxies Soketi private-channel auth from the browser through the central
- * app/ API. The browser never holds the Pusher app secret — this controller
- * acts as the auth intermediary.
- *
- * The central BroadcastAuthController validates that the requested channel
- * belongs to this tenant before signing. If the channel is not scoped to
- * this tenant, the central API returns 403 and we forward that too.
+ * Signs the browser's private-channel subscriptions by proxying to the
+ * central platform's tenant broadcasting auth endpoint, using the tenant
+ * API token. The browser never holds the Pusher app secret or the token.
  */
 class BroadcastAuthController extends Controller
 {
-    public function __construct(private PlatformApiClient $api) {}
+    public function __construct(private TenantApiClient $api) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -31,7 +28,7 @@ class BroadcastAuthController extends Controller
             );
 
             return response()->json($auth);
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        } catch (RequestException $e) {
             return response()->json(
                 ['message' => 'Channel auth failed.'],
                 $e->response->status(),
