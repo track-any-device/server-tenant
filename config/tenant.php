@@ -32,16 +32,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Incident Rules
+    | Offline Threshold
     |--------------------------------------------------------------------------
     |
-    | Incidents are calculated locally from the signal stream — the central
-    | platform does not monitor tenant devices.
+    | This app is current-state only — no incidents. The listener's periodic
+    | sweep simply flips a device to offline once it has been silent for this
+    | many minutes (the public page shows online/offline from this flag).
     |
     */
 
     'offline_after_minutes' => (int) env('TENANT_OFFLINE_AFTER_MINUTES', 15),
-    'low_battery_threshold' => (int) env('TENANT_LOW_BATTERY_THRESHOLD', 15),
-    'low_battery_recovered' => (int) env('TENANT_LOW_BATTERY_RECOVERED', 25),
 
 ];

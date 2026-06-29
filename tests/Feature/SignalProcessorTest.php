@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\Device;
-use App\Models\Incident;
-use App\Models\Signal;
 use App\Services\SignalProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -32,15 +30,14 @@ it('auto-creates a device when it first appears on the broadcast stream', functi
         ->and($device->battery_percent)->toBe(80);
 });
 
-it('keeps a signal track per device', function () {
+it('only upserts the current state — no signal history is stored', function () {
     $processor = app(SignalProcessor::class);
     $processor->handleEvent('device.signal.received', signalPayload());
     $processor->handleEvent('device.signal.received', signalPayload(['lat' => 33.7, 'lng' => 73.1]));
 
-    $device = Device::sole();
-    expect(Signal::count())->toBe(2)
-        ->and($device->signals()->count())->toBe(2)
-        ->and($device->last_lat)->toBe(33.7);
+    // One device, overwritten in place. No signals table exists.
+    expect(Device::count())->toBe(1)
+        ->and(Device::sole()->last_lat)->toBe(33.7);
 });
 
 it('handles signal.created and locations.batch event shapes', function () {
@@ -59,36 +56,18 @@ it('handles signal.created and locations.batch event shapes', function () {
     ]);
 
     expect(Device::pluck('imei')->all())->toBe(['TEST-IMEI-002', 'TEST-IMEI-003'])
-        ->and(Signal::count())->toBe(2);
+        ->and(Device::where('imei', 'TEST-IMEI-002')->sole()->battery_percent)->toBe(55);
 });
 
-it('opens a low_battery incident and resolves it on recovery', function () {
-    $processor = app(SignalProcessor::class);
-
-    $processor->handleEvent('device.signal.received', signalPayload(['battery' => 10]));
-    expect(Device::sole()->openIncident(Incident::TYPE_LOW_BATTERY))->not->toBeNull();
-
-    // Still below the recovery threshold — stays open, no duplicate.
-    $processor->handleEvent('device.signal.received', signalPayload(['battery' => 20]));
-    expect(Incident::count())->toBe(1)
-        ->and(Incident::sole()->status)->toBe(Incident::STATUS_OPEN);
-
-    $processor->handleEvent('device.signal.received', signalPayload(['battery' => 90]));
-    expect(Incident::sole()->status)->toBe(Incident::STATUS_RESOLVED);
-});
-
-it('marks silent devices offline, opens an incident, and resolves when back', function () {
+it('marks silent devices offline and flips them back online when they signal again', function () {
     $processor = app(SignalProcessor::class);
     $processor->handleEvent('device.signal.received', signalPayload());
 
     Device::sole()->update(['last_signal_at' => now()->subMinutes(30)]);
     $processor->markOfflineDevices();
 
-    $device = Device::sole();
-    expect($device->is_online)->toBeFalse()
-        ->and($device->openIncident(Incident::TYPE_DEVICE_OFFLINE))->not->toBeNull();
+    expect(Device::sole()->is_online)->toBeFalse();
 
     $processor->handleEvent('device.signal.received', signalPayload());
-    expect(Device::sole()->is_online)->toBeTrue()
-        ->and(Incident::where('status', Incident::STATUS_OPEN)->count())->toBe(0);
+    expect(Device::sole()->is_online)->toBeTrue();
 });

@@ -1,11 +1,16 @@
 # server-tenant — AI Instructions
 
-This is the **standalone tenant operational portal** for the Track Any Device platform.
+This is the **standalone, public device tracker** for the Track Any Device platform.
 Docker image: `trackanydevice/server-tenant` | One running instance per tenant.
 
 **This app is independent.** It has NO `track-any-device/*` package dependencies, no SSO,
-and no connection to the central MySQL. It owns its own SQLite database (users, devices,
-signals, incidents) and keeps itself current by listening to the central Soketi websocket.
+and no connection to the central MySQL. It owns its own SQLite database and keeps the
+**current state** of each device fresh by listening to the central Soketi websocket.
+
+It is **public and current-state only**: the primary surface is a no-login page where
+anyone enters a device id and sees that device's latest position, battery, speed,
+last-seen and online/offline status. There is **no signal history** and **no incidents** —
+the local database holds essentially one meaningful table, `devices` (current state).
 
 Read this file completely before making any change.
 
@@ -28,33 +33,24 @@ Everything else is local:
 central Soketi ──websocket──▶ php artisan tenant:listen-signals (supervisord)
                                  │  private-tenant.{id}.device-logs  → device.signal.received
                                  │  private-tenant.{id}.locations    → signal.created, locations.batch
-                                 ├─▶ signals table   (every event logged)
-                                 ├─▶ devices table   (last position/battery updated;
-                                 │                    unknown devices AUTO-CREATED)
-                                 └─▶ incidents table (calculated LOCALLY — see rules below)
+                                 └─▶ devices table — CURRENT state overwritten in place
+                                     (last position/battery/speed/status/last_seen;
+                                      unknown devices AUTO-CREATED)
 ```
 
-The central platform has incident monitoring **turned off for tenant devices**
-(`app/` skips `CheckBeatViolation` when `device->tenant_id` is set). This app is the
-source of truth for its own incidents.
-
-### Incident rules (`App\Services\SignalProcessor`)
-
-| Type | Opens when | Auto-resolves when |
-|---|---|---|
-| `device_offline` | no signal for `TENANT_OFFLINE_AFTER_MINUTES` (sweep runs every 60 s inside the listener) | device signals again |
-| `low_battery` | battery ≤ `TENANT_LOW_BATTERY_THRESHOLD` | battery ≥ `TENANT_LOW_BATTERY_RECOVERED` |
-
-Add new rules in `SignalProcessor::evaluateIncidents()` — never in controllers.
+**Current-state only.** The listener stores nothing per signal. Each event overwrites the
+matching `devices` row. No `signals` table, no `incidents` table, no local incident
+calculation. A periodic sweep flips silent devices to `is_online = false` (the only thing
+the offline threshold still drives) — it opens no incident.
 
 ---
 
 ## Authentication — built-in Laravel (Fortify)
 
-Users are **local rows in this app's SQLite database**. Login, registration, password reset,
-two-factor, and passkeys are all handled by Laravel Fortify (`FortifyServiceProvider`,
-`config/fortify.php`). There is **no SSO** — do not reintroduce `package-sso-client`,
-Socialite, or central-user lookups.
+The **public tracker needs no login**. The small operational portal (devices list, device
+detail, live map) is gated by Laravel Fortify auth — users are local rows in this app's
+SQLite database. There is **no SSO** — do not reintroduce `package-sso-client`, Socialite,
+or central-user lookups.
 
 ---
 
@@ -64,14 +60,45 @@ SQLite by default (`database/database.sqlite`), MySQL possible for on-premise.
 
 | Table | Purpose |
 |---|---|
+| `devices` | This tenant's devices — synced once, then kept at CURRENT state by the listener |
 | `users` | Local portal users (Fortify auth) |
-| `devices` | This tenant's devices — synced once, then maintained by the listener |
-| `signals` | Every broadcast signal, tracked per device (`device_id`, `recorded_at` indexed) |
-| `incidents` | Locally calculated incidents |
 | `sessions`, `cache`, `jobs` | Laravel internals |
+
+There is no `signals` table and no `incidents` table — they were dropped when this app
+became a current-state-only tracker (see
+`database/migrations/2026_06_29_000001_drop_signals_and_incidents_tables.php`). Do not
+reintroduce history tables.
 
 Migrations live **in this repo** (`database/migrations/`) — this app is exempt from the
 platform's "models live in package-core" rule because it is standalone.
+
+---
+
+## Public surface (no auth) — the primary one
+
+| Route | What it does |
+|---|---|
+| `GET /` | Public device-id lookup page (form). The app's landing page. |
+| `GET /track/{deviceId?}` | Same page pre-loaded with one device's current state (or a not-found flag). |
+| `GET /public/devices/{deviceId}` | Public JSON API — `{ "data": { ...current state... } }`, or `404` for an unknown id (no fabricated data). |
+
+`deviceId` is the device's **public-facing id** — its IMEI / broadcast id (a numeric
+platform id is also accepted for convenience). `Device::toPublicArray()` is the contract
+for both surfaces and deliberately exposes no internal database id.
+
+---
+
+## Authenticated portal (kept minimal)
+
+| Route | Page |
+|---|---|
+| `GET /dashboard` | Device + online counts, links to devices/map |
+| `GET /devices` `GET /devices/{id}` | Current-state device list + detail |
+| `GET /map` | Live map of current positions (Soketi real-time) |
+| `POST /broadcasting/auth` | Proxies private-channel auth to the central platform |
+
+The incidents, beats and assignees pages were **removed** — those concepts depended on
+signal history / central data that this app no longer holds.
 
 ---
 
@@ -80,27 +107,24 @@ platform's "models live in package-core" rule because it is standalone.
 ```
 app/
 ├── Console/Commands/
-│   ├── SyncDevices.php        ← tenant:sync-devices — one-time load via Tenant API
-│   └── ListenSignals.php      ← tenant:listen-signals — websocket listener (background job)
+│   ├── SyncDevices.php           ← tenant:sync-devices — one-time load via Tenant API
+│   └── ListenSignals.php         ← tenant:listen-signals — websocket listener (background job)
 ├── Models/
-│   ├── User.php               ← local Fortify user
-│   ├── Device.php             ← toPortalArray() shapes data for the React pages
-│   ├── Signal.php
-│   └── Incident.php
+│   ├── User.php                  ← local Fortify user
+│   └── Device.php                ← toPortalArray() (authed pages) + toPublicArray() (public)
 ├── Services/
-│   ├── TenantApiClient.php    ← the ONLY way to talk to the central platform
-│   └── SignalProcessor.php    ← signal ingestion + incident calculation
-└── Http/Controllers/Portal/   ← Inertia controllers reading the LOCAL database
+│   ├── TenantApiClient.php       ← the ONLY way to talk to the central platform
+│   └── SignalProcessor.php       ← current-state upsert from the Soketi stream
+└── Http/Controllers/
+    ├── PublicTrackerController.php   ← public lookup page + public JSON API
+    └── Portal/                       ← authed Inertia controllers reading the LOCAL database
 ```
-
-`BeatController` / `AssigneeController` render their pages' built-in empty states —
-beats and assignees are central-platform concepts not included in the standalone data set.
 
 ---
 
 ## Real-time in the browser
 
-The live map subscribes to the same Soketi channels as the listener. Channel auth is
+The authed live map subscribes to the same Soketi channels as the listener. Channel auth is
 proxied: browser → `POST /broadcasting/auth` (this app) → central
 `/api/v1/tenant/broadcasting/auth` with the tenant API token. The browser never sees
 the token or the Pusher secret.
@@ -129,8 +153,7 @@ composer dev                            # serve + vite
 | `PLATFORM_API_URL` | Central API base URL |
 | `PUSHER_APP_KEY` / `PUSHER_HOST` / `PUSHER_PORT` / `PUSHER_SCHEME` | Central Soketi connection |
 | `DB_CONNECTION` | `sqlite` (default) |
-| `TENANT_OFFLINE_AFTER_MINUTES` | Offline incident threshold (default 15) |
-| `TENANT_LOW_BATTERY_THRESHOLD` / `TENANT_LOW_BATTERY_RECOVERED` | Battery incident thresholds (15 / 25) |
+| `TENANT_OFFLINE_AFTER_MINUTES` | Silence after which the sweep flips a device offline (default 15) |
 
 ---
 
@@ -140,6 +163,7 @@ composer dev                            # serve + vite
 - SSO, Socialite, or central-user authentication
 - Direct MySQL queries to the central database
 - Proxying portal page data from the central API (the old `PlatformApiClient` pattern — removed)
+- **Signal history or incident tables / logic** — this app is current-state only
 - Filament, Livewire, JT808/TAD-101 protocol code, SMS gateway logic
 
 ---
@@ -147,9 +171,10 @@ composer dev                            # serve + vite
 ## Frontend stack
 
 React 19 + Inertia v3, `@trackany-device/components` from npm, Tailwind v4, pnpm
-(`node-linker=hoisted` in `.npmrc`). Pages compose package components only — no raw HTML.
-The React pages' prop shapes are the contract: `Device::toPortalArray()` and
-`Incident::toPortalArray()` must keep matching them.
+(`node-linker=hoisted` in `.npmrc`). Pages compose package components. The public
+`track` page opts out of the authed sidebar layout. The React pages' prop shapes are the
+contract: `Device::toPortalArray()` (authed pages) and `Device::toPublicArray()` (public
+page + API) must keep matching them.
 
 ---
 

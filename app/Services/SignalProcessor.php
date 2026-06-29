@@ -5,29 +5,23 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Device;
-use App\Models\Incident;
-use App\Models\Signal;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Turns broadcast payloads from the central Soketi stream into local
- * devices, signals, and incidents.
+ * Turns broadcast payloads from the central Soketi stream into each device's
+ * CURRENT state.
  *
- * Incident rules are calculated HERE — the central platform has incident
- * monitoring turned off for tenant devices. Current rules:
- *
- *   device_offline — no signal for tenant.offline_after_minutes (sweep),
- *                    auto-resolved when the device signals again.
- *   low_battery    — battery <= tenant.low_battery_threshold, auto-resolved
- *                    once it recovers above tenant.low_battery_recovered.
+ * This app is a PUBLIC, current-state-only tracker: it stores NO per-signal
+ * history and calculates NO incidents. Every event simply overwrites the
+ * matching device row in place (last position / battery / speed / status /
+ * last_signal_at). Unknown devices are auto-created so a device added on the
+ * platform mid-stream is picked up without re-running the sync.
  */
 class SignalProcessor
 {
     /**
-     * Handle one event from the Soketi stream. Unknown devices are created
-     * on the fly so a device added on the platform mid-stream is picked up
-     * without re-running the sync.
+     * Handle one event from the Soketi stream.
      */
     public function handleEvent(string $event, array $payload): void
     {
@@ -40,8 +34,9 @@ class SignalProcessor
     }
 
     /**
-     * Sweep for devices that stopped signalling. Marks them offline and
-     * opens a device_offline incident. Called periodically by the listener.
+     * Sweep for devices that stopped signalling and flip them offline. Called
+     * periodically by the listener. No history, no incidents — just the
+     * current online/offline flag the public page reads.
      */
     public function markOfflineDevices(): void
     {
@@ -51,14 +46,7 @@ class SignalProcessor
             ->where('is_online', true)
             ->whereNotNull('last_signal_at')
             ->where('last_signal_at', '<', $cutoff)
-            ->each(function (Device $device): void {
-                $device->update(['is_online' => false]);
-
-                $this->openIncident($device, Incident::TYPE_DEVICE_OFFLINE, 'high', [
-                    'title' => "{$device->name} went offline",
-                    'description' => "No signal received since {$device->last_signal_at?->toDayDateTimeString()}.",
-                ]);
-            });
+            ->update(['is_online' => false]);
     }
 
     /**
@@ -81,17 +69,7 @@ class SignalProcessor
             ? CarbonImmutable::parse($payload['last_seen_at'])
             : CarbonImmutable::now();
 
-        $device->signals()->create([
-            'lat' => $payload['lat'] ?? null,
-            'lon' => $payload['lng'] ?? null,
-            'speed' => $payload['speed'] ?? null,
-            'battery' => $payload['battery'] ?? null,
-            'is_online' => $payload['is_online'] ?? true,
-            'event' => $event,
-            'payload' => $payload,
-            'recorded_at' => $recordedAt,
-        ]);
-
+        // Current-state only: overwrite the device row in place.
         $device->update(array_filter([
             'last_lat' => $payload['lat'] ?? null,
             'last_lon' => $payload['lng'] ?? null,
@@ -101,8 +79,6 @@ class SignalProcessor
             'is_online' => $payload['is_online'] ?? true,
             'last_signal_at' => $recordedAt,
         ]);
-
-        $this->evaluateIncidents($device->fresh());
     }
 
     /** A locations.batch payload carries many positions in one event. */
@@ -169,57 +145,5 @@ class SignalProcessor
             'name' => $imei ?? "Device {$platformId}",
             'status' => 'active',
         ]);
-    }
-
-    private function evaluateIncidents(Device $device): void
-    {
-        // Back online → resolve any open offline incident.
-        if ($device->is_online) {
-            $this->resolveIncident($device, Incident::TYPE_DEVICE_OFFLINE, 'Device came back online.');
-        }
-
-        if ($device->battery_percent === null) {
-            return;
-        }
-
-        if ($device->battery_percent <= (int) config('tenant.low_battery_threshold')) {
-            $this->openIncident($device, Incident::TYPE_LOW_BATTERY, 'medium', [
-                'title' => "{$device->name} battery low ({$device->battery_percent}%)",
-                'description' => 'Battery dropped below the configured threshold.',
-            ]);
-        } elseif ($device->battery_percent >= (int) config('tenant.low_battery_recovered')) {
-            $this->resolveIncident($device, Incident::TYPE_LOW_BATTERY, 'Battery recovered.');
-        }
-    }
-
-    /** @param array{title: string, description: string} $attributes */
-    private function openIncident(Device $device, string $eventType, string $priority, array $attributes): void
-    {
-        if ($device->openIncident($eventType) !== null) {
-            return; // Already open — don't duplicate.
-        }
-
-        $device->incidents()->create([
-            'event_type' => $eventType,
-            'status' => Incident::STATUS_OPEN,
-            'priority' => $priority,
-            'title' => $attributes['title'],
-            'description' => $attributes['description'],
-            'triggered_at' => now(),
-        ]);
-
-        Log::info('Incident opened', ['device' => $device->imei, 'type' => $eventType]);
-    }
-
-    private function resolveIncident(Device $device, string $eventType, string $notes): void
-    {
-        $device->incidents()
-            ->where('event_type', $eventType)
-            ->where('status', '!=', Incident::STATUS_RESOLVED)
-            ->update([
-                'status' => Incident::STATUS_RESOLVED,
-                'resolved_at' => now(),
-                'resolution_notes' => $notes,
-            ]);
     }
 }
