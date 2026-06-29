@@ -22,8 +22,8 @@ use WebSocket\Message\Message;
  *
  *   1. If the local devices table is empty, load it once via the Tenant API.
  *   2. Connect to Soketi and subscribe to the tenant's private channels,
- *      signing the subscription via /api/v1/tenant/broadcasting/auth with
- *      the tenant API token.
+ *      signing the subscription via /api/portal/broadcasting/auth with the
+ *      tenant access key (Bearer) + X-Tenant-Id.
  *   3. Every signal event → SignalProcessor (device CURRENT state overwritten
  *      in place; unknown devices are auto-created).
  *   4. A periodic sweep flips silent devices to offline.

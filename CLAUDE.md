@@ -18,13 +18,15 @@ Read this file completely before making any change.
 
 ## Architecture — how this app stays independent
 
-The only platform credential is the **tenant API token** (`TENANT_API_TOKEN`) — a scoped
-Sanctum token issued by the central platform (`devices.read` + `signals.read`). It is used
-for exactly two things:
+The only platform credential is the tenant's **machine access key** (`TENANT_API_TOKEN`, a
+`tk_…` value generated/copied from the admin org-details screen). It's sent to the platform's
+**`/api/portal`** endpoints as `Authorization: Bearer {key}` + `X-Tenant-Id: {APP_TENANT_ID}`
+(validated by `ValidateTenantApiKey` against the tenant's `key_hash` — not a Sanctum token, no
+scopes). It is used for exactly two things:
 
 1. **One-time device load** — `php artisan tenant:sync-devices` pages through
-   `GET {PLATFORM_API_URL}/api/v1/tenant/devices` and upserts into the local `devices` table.
-2. **Soketi private-channel auth** — `POST {PLATFORM_API_URL}/api/v1/tenant/broadcasting/auth`
+   `GET {PLATFORM_API_URL}/api/portal/devices` and upserts into the local `devices` table.
+2. **Soketi private-channel auth** — `POST {PLATFORM_API_URL}/api/portal/broadcasting/auth`
    signs channel subscriptions for the background listener and the browser live map.
 
 Everything else is local:
@@ -126,8 +128,8 @@ app/
 
 The authed live map subscribes to the same Soketi channels as the listener. Channel auth is
 proxied: browser → `POST /broadcasting/auth` (this app) → central
-`/api/v1/tenant/broadcasting/auth` with the tenant API token. The browser never sees
-the token or the Pusher secret.
+`/api/portal/broadcasting/auth` with the tenant access key (Bearer) + `X-Tenant-Id`. The browser
+never sees the key or the Pusher secret.
 
 ---
 
@@ -149,7 +151,7 @@ composer dev                            # serve + vite
 | Variable | Purpose |
 |---|---|
 | `APP_TENANT_SLUG` / `APP_TENANT_ID` | Tenant identity — id must match the central platform (channel names) |
-| `TENANT_API_TOKEN` | Scoped Sanctum token — the only platform credential |
+| `TENANT_API_TOKEN` | Tenant machine access key (`tk_…`, from the admin org-details screen) — sent as `Authorization: Bearer` + `X-Tenant-Id`; the only platform credential |
 | `PLATFORM_API_URL` | Central API base URL |
 | `PUSHER_APP_KEY` / `PUSHER_HOST` / `PUSHER_PORT` / `PUSHER_SCHEME` | Central Soketi connection |
 | `DB_CONNECTION` | `sqlite` (default) |
