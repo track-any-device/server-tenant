@@ -33,6 +33,10 @@ it('returns 404 for an unknown device id — no fabricated data', function () {
 });
 
 it('serves the public lookup page without authentication', function () {
+    // The page renders the @vite Inertia bundle; the Tests CI job builds no frontend assets,
+    // so stub Vite to avoid a ViteManifestNotFoundException (we only assert the route is public).
+    $this->withoutVite();
+
     $this->get('/')->assertOk();
     $this->get('/track')->assertOk();
 });
