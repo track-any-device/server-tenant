@@ -18,13 +18,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Tenant API Token
+    | Tenant Access Key
     |--------------------------------------------------------------------------
     |
-    | Scoped Sanctum token issued by the central platform for this tenant.
-    | Used for the one-time device sync (devices.read) and for private
-    | channel authentication against /api/v1/tenant/broadcasting/auth
-    | (signals.read). This is the ONLY credential this app needs.
+    | The tenant's machine access key (tk_…), generated/copied from the admin
+    | org-details screen. Sent to the platform's /api/portal endpoints as
+    | `Authorization: Bearer {key}` alongside `X-Tenant-Id: {id}` (above) for the
+    | one-time device sync and private Soketi channel auth. This is the ONLY
+    | credential this app needs (validated against the tenant's key_hash).
     |
     */
 
