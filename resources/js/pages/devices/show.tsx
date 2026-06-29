@@ -5,37 +5,25 @@ import {
     usePlatformNavigate,
 } from '@trackany-device/components';
 
-interface Signal {
-    lat: number | null;
-    lon: number | null;
-    battery: number | null;
-    speed: number | null;
-    recorded_at: string | null;
-}
-
 interface Device {
     id: number;
     name: string;
     imei: string;
     status: string;
-    onboarding_status: string;
-    gsm_number?: string;
     last_lat: number | null;
     last_lon: number | null;
     last_speed: number | null;
     battery_percent: number | null;
     last_signal_at: string | null;
     device_type?: { name: string; slug: string };
-    current_assignment?: { assignee?: { name: string; id: number } };
 }
 
 interface PageProps {
     device: Device;
-    signals: Signal;
 }
 
 export default function DeviceShow() {
-    const { device, signals } = usePlatformPageProps<PageProps>();
+    const { device } = usePlatformPageProps<PageProps>();
     const navigate = usePlatformNavigate();
 
     return (
@@ -54,9 +42,9 @@ export default function DeviceShow() {
                 </h1>
                 <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        device.status === 'active'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-600'
+                        device.status === 'offline'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
                     }`}
                 >
                     {device.status}
@@ -73,12 +61,7 @@ export default function DeviceShow() {
                         {[
                             ['IMEI', device.imei],
                             ['Type', device.device_type?.name ?? '—'],
-                            ['Status', device.onboarding_status],
-                            [
-                                'Assignee',
-                                device.current_assignment?.assignee?.name ??
-                                    'Unassigned',
-                            ],
+                            ['Status', device.status],
                         ].map(([label, value]) => (
                             <div
                                 key={label}
@@ -93,32 +76,32 @@ export default function DeviceShow() {
                     </dl>
                 </div>
 
-                {/* Last signal */}
+                {/* Current state */}
                 <div className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                     <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-                        Last Signal
+                        Current State
                     </h2>
                     <dl className="space-y-2">
                         {[
-                            ['Latitude', signals.lat?.toFixed(6) ?? '—'],
-                            ['Longitude', signals.lon?.toFixed(6) ?? '—'],
+                            ['Latitude', device.last_lat?.toFixed(6) ?? '—'],
+                            ['Longitude', device.last_lon?.toFixed(6) ?? '—'],
                             [
                                 'Speed',
-                                signals.speed != null
-                                    ? `${signals.speed} km/h`
+                                device.last_speed != null
+                                    ? `${device.last_speed} km/h`
                                     : '—',
                             ],
                             [
                                 'Battery',
-                                signals.battery != null
-                                    ? `${signals.battery}%`
+                                device.battery_percent != null
+                                    ? `${device.battery_percent}%`
                                     : '—',
                             ],
                             [
-                                'Recorded',
-                                signals.recorded_at
+                                'Last signal',
+                                device.last_signal_at
                                     ? new Date(
-                                          signals.recorded_at,
+                                          device.last_signal_at,
                                       ).toLocaleString()
                                     : '—',
                             ],
@@ -131,8 +114,8 @@ export default function DeviceShow() {
                                 <dd
                                     className={`font-medium ${
                                         label === 'Battery' &&
-                                        signals.battery != null &&
-                                        signals.battery < 20
+                                        device.battery_percent != null &&
+                                        device.battery_percent < 20
                                             ? 'text-red-600'
                                             : 'text-gray-900 dark:text-white'
                                     }`}

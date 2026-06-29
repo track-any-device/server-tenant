@@ -15,8 +15,8 @@ use WebSocket\Message\Message;
 
 /**
  * The background job that keeps this app independent of the central platform:
- * it connects to the tenant Soketi websocket, logs every device signal into
- * the local database, and calculates this tenant's incidents.
+ * it connects to the tenant Soketi websocket and upserts each device's
+ * CURRENT state into the local database. No signal history, no incidents.
  *
  * Run under supervisord (see docker/supervisord.conf). Flow:
  *
@@ -24,9 +24,9 @@ use WebSocket\Message\Message;
  *   2. Connect to Soketi and subscribe to the tenant's private channels,
  *      signing the subscription via /api/v1/tenant/broadcasting/auth with
  *      the tenant API token.
- *   3. Every signal event → SignalProcessor (signal row + device update +
- *      incident rules; unknown devices are auto-created).
- *   4. A periodic sweep marks silent devices offline and opens incidents.
+ *   3. Every signal event → SignalProcessor (device CURRENT state overwritten
+ *      in place; unknown devices are auto-created).
+ *   4. A periodic sweep flips silent devices to offline.
  */
 class ListenSignals extends Command
 {

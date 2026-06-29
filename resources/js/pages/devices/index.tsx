@@ -15,7 +15,6 @@ interface Device {
     battery_percent: number | null;
     last_signal_at: string | null;
     device_type?: { name: string };
-    current_assignment?: { assignee?: { name: string } };
 }
 
 interface PageProps {
@@ -53,7 +52,6 @@ export default function DevicesIndex() {
                         <tr>
                             <th className="px-4 py-3 text-left">Device</th>
                             <th className="px-4 py-3 text-left">Status</th>
-                            <th className="px-4 py-3 text-left">Assignee</th>
                             <th className="px-4 py-3 text-left">Battery</th>
                             <th className="px-4 py-3 text-left">Last signal</th>
                         </tr>
@@ -82,10 +80,6 @@ export default function DevicesIndex() {
                                         {device.status}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">
-                                    {device.current_assignment?.assignee
-                                        ?.name ?? '—'}
-                                </td>
                                 <td className="px-4 py-3">
                                     {device.battery_percent != null ? (
                                         <span
@@ -113,7 +107,7 @@ export default function DevicesIndex() {
                         {devices.data.length === 0 && (
                             <tr>
                                 <td
-                                    colSpan={5}
+                                    colSpan={4}
                                     className="px-4 py-8 text-center text-gray-400"
                                 >
                                     No devices found.

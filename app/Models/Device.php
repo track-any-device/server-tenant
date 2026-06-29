@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Device extends Model
 {
@@ -25,27 +24,9 @@ class Device extends Model
         ];
     }
 
-    public function signals(): HasMany
-    {
-        return $this->hasMany(Signal::class);
-    }
-
-    public function incidents(): HasMany
-    {
-        return $this->hasMany(Incident::class);
-    }
-
-    public function openIncident(string $eventType): ?Incident
-    {
-        return $this->incidents()
-            ->where('event_type', $eventType)
-            ->where('status', 'open')
-            ->latest('triggered_at')
-            ->first();
-    }
-
     /**
-     * Shape consumed by the React pages (devices/index, devices/show, map).
+     * Shape consumed by the authenticated portal pages (devices/index,
+     * devices/show, map).
      *
      * @return array<string, mixed>
      */
@@ -65,6 +46,29 @@ class Device extends Model
             'device_type' => $this->device_type_name
                 ? ['name' => $this->device_type_name, 'slug' => $this->device_type_slug]
                 : null,
+        ];
+    }
+
+    /**
+     * Shape consumed by the PUBLIC device-id lookup (no auth). Deliberately
+     * narrow — only the current-state fields a member of the public needs to
+     * locate the device. No internal ids are exposed.
+     *
+     * @return array<string, mixed>
+     */
+    public function toPublicArray(): array
+    {
+        return [
+            'imei' => $this->imei,
+            'name' => $this->name,
+            'is_online' => (bool) $this->is_online,
+            'status' => $this->is_online ? 'online' : 'offline',
+            'last_lat' => $this->last_lat,
+            'last_lon' => $this->last_lon,
+            'last_speed' => $this->last_speed,
+            'battery_percent' => $this->battery_percent,
+            'last_signal_at' => $this->last_signal_at?->toIso8601ZuluString(),
+            'device_type' => $this->device_type_name,
         ];
     }
 }
