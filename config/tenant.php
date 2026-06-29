@@ -44,4 +44,18 @@ return [
 
     'offline_after_minutes' => (int) env('TENANT_OFFLINE_AFTER_MINUTES', 15),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Stale-device Pruning
+    |--------------------------------------------------------------------------
+    |
+    | A device that stops broadcasting for this many hours is deleted by the
+    | scheduled `tenant:prune-stale-devices` command (hourly). The listener
+    | re-creates a device if it ever reports again, so this is safe. Set to 0
+    | (or a negative value) to disable pruning and keep devices indefinitely.
+    |
+    */
+
+    'prune_after_hours' => (int) env('TENANT_PRUNE_AFTER_HOURS', 24),
+
 ];

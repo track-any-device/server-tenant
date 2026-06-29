@@ -45,6 +45,12 @@ matching `devices` row. No `signals` table, no `incidents` table, no local incid
 calculation. A periodic sweep flips silent devices to `is_online = false` (the only thing
 the offline threshold still drives) — it opens no incident.
 
+**Stale-device pruning.** A separate scheduled command, `tenant:prune-stale-devices` (hourly,
+run by the `schedule:work` supervisord program), deletes any device that hasn't broadcast for
+`TENANT_PRUNE_AFTER_HOURS` (default 24; 0 disables) — judged by `last_signal_at`, falling back to
+`created_at` for a device that was synced but never reported. The listener re-creates a device if
+it ever reports again, so deletion is safe.
+
 ---
 
 ## Authentication — built-in Laravel (Fortify)
@@ -110,7 +116,8 @@ signal history / central data that this app no longer holds.
 app/
 ├── Console/Commands/
 │   ├── SyncDevices.php           ← tenant:sync-devices — one-time load via Tenant API
-│   └── ListenSignals.php         ← tenant:listen-signals — websocket listener (background job)
+│   ├── ListenSignals.php         ← tenant:listen-signals — websocket listener (background job)
+│   └── PruneStaleDevices.php     ← tenant:prune-stale-devices — hourly: delete devices silent > N hours
 ├── Models/
 │   ├── User.php                  ← local Fortify user
 │   └── Device.php                ← toPortalArray() (authed pages) + toPublicArray() (public)
@@ -142,7 +149,8 @@ php artisan tenant:listen-signals       # background listener (supervisord in pr
 composer dev                            # serve + vite
 ```
 
-`docker/supervisord.conf` runs nginx + php-fpm + the signal listener.
+`docker/supervisord.conf` runs nginx + php-fpm + the signal listener + the Laravel scheduler
+(`schedule:work`, which fires `tenant:prune-stale-devices` hourly).
 
 ---
 
@@ -156,6 +164,7 @@ composer dev                            # serve + vite
 | `PUSHER_APP_KEY` / `PUSHER_HOST` / `PUSHER_PORT` / `PUSHER_SCHEME` | Central Soketi connection |
 | `DB_CONNECTION` | `sqlite` (default) |
 | `TENANT_OFFLINE_AFTER_MINUTES` | Silence after which the sweep flips a device offline (default 15) |
+| `TENANT_PRUNE_AFTER_HOURS` | Silence after which `tenant:prune-stale-devices` deletes a device (default 24; 0 disables) |
 
 ---
 
