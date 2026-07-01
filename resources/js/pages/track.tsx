@@ -58,7 +58,10 @@ function DeviceSearch({
     const submit = (e: FormEvent) => {
         e.preventDefault();
         const id = query.trim();
-        if (id) navigate(`/track/${encodeURIComponent(id)}`);
+
+        if (id) {
+            navigate(`/track/${encodeURIComponent(id)}`);
+        }
     };
 
     return (
