@@ -234,8 +234,7 @@ function DeviceCard({
 
             {hasLocation && (
                 <p className="mt-5 font-mono text-xs text-gray-400">
-                    {device.last_lat!.toFixed(5)},{' '}
-                    {device.last_lon!.toFixed(5)}
+                    {device.last_lat!.toFixed(5)}, {device.last_lon!.toFixed(5)}
                 </p>
             )}
         </div>
