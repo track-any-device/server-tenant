@@ -31,11 +31,13 @@ class SyncDevices extends Command
 
         $page = 1;
         $count = 0;
+        $seenImeis = [];
 
         do {
             $response = $api->devices($page);
 
             foreach ($response['data'] ?? [] as $remote) {
+                $seenImeis[] = (string) $remote['imei'];
                 Device::updateOrCreate(
                     ['imei' => $remote['imei']],
                     [
@@ -57,7 +59,18 @@ class SyncDevices extends Command
             $lastPage = (int) data_get($response, 'meta.last_page', 1);
         } while ($page++ < $lastPage);
 
-        $this->info("Synced {$count} devices from the platform.");
+        // Reconcile: a device the platform no longer lists for this tenant was
+        // re-assigned or retired — remove it. Only runs after EVERY page
+        // fetched successfully ($api->devices() throws on any failure), so a
+        // partial sync can never mass-delete.
+        $removed = 0;
+        if ($seenImeis !== []) {
+            $removed = Device::query()->whereNotIn('imei', $seenImeis)->delete();
+        } elseif (Device::query()->exists()) {
+            $this->warn('Platform returned no devices — skipping removal of local devices (check tenant credentials).');
+        }
+
+        $this->info("Synced {$count} devices from the platform.".($removed > 0 ? " Removed {$removed} no longer associated." : ''));
 
         return self::SUCCESS;
     }
